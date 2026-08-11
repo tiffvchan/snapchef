@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Session {
+  id        String     @id @default(cuid())
+  createdAt DateTime   @default(now())
+  recipes   Recipe[]
+  haveItems HaveItem[]
+}
+
+model Recipe {
+  id          String           @id @default(cuid())
+  sessionId   String
+  session     Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name        String
+  createdAt   DateTime         @default(now())
+  ingredients IngredientLine[]
+}
+
+model IngredientLine {
+  id       String  @id @default(cuid())
+  recipeId String
+  recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  rawText  String
+  name     String
+  quantity String?
+  unit     String?
+  category String
+}
+
+// One row per ingredient a session has marked "already have", keyed by the
+// same normalized name used for deduping on the grocery list.
+model HaveItem {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  key       String
+  createdAt DateTime @default(now())
+
+  @@unique([sessionId, key])
+}

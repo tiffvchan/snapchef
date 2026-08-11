@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/lib/generated/prisma
+
+# prisma init AI-assistant skill docs (tooling scaffolding, not app code)
+/.claude/skills
+/.agents
+/.windsurf
+/skills-lock.json
+
+# local-only Claude Code settings
+.claude/settings.local.json
