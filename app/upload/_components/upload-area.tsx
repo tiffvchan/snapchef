@@ -1,164 +1,39 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { RecipeSession } from "../_lib/use-recipe-session";
 
-type RecipeDraft = {
-  id: string;
-  file: File;
-  previewUrl: string;
-  name: string;
-};
+export default function UploadArea({ session }: { session: RecipeSession }) {
+  const {
+    recipes,
+    extractions,
+    addFiles,
+    removeRecipe,
+    renameRecipe,
+    runExtraction,
+    runAllExtractions,
+    updateIngredient,
+    removeIngredient,
+  } = session;
 
-type IngredientLine = {
-  id: string;
-  rawText: string;
-  name: string;
-  quantity: string | null;
-  unit: string | null;
-};
-
-type ExtractionState =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "done"; ingredients: IngredientLine[] };
-
-function nameFromFile(file: File, index: number) {
-  const base = file.name.replace(/\.[^/.]+$/, "").trim();
-  return base || `Recipe ${index + 1}`;
-}
-
-async function extractIngredients(file: File): Promise<IngredientLine[]> {
-  const formData = new FormData();
-  formData.append("image", file);
-
-  const res = await fetch("/api/extract-ingredients", {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? `Extraction failed (${res.status})`);
-  }
-
-  const data: { ingredients: Omit<IngredientLine, "id">[] } = await res.json();
-  return data.ingredients.map((ingredient, i) => ({
-    ...ingredient,
-    id: `${Date.now()}-${i}`,
-  }));
-}
-
-export default function UploadArea() {
-  const [recipes, setRecipes] = useState<RecipeDraft[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [extractions, setExtractions] = useState<
-    Record<string, ExtractionState>
-  >({});
   const inputRef = useRef<HTMLInputElement>(null);
+  const nameInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const seenRecipeIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    return () => {
-      recipes.forEach((recipe) => URL.revokeObjectURL(recipe.previewUrl));
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const currentIds = recipes.map((r) => r.id);
+    const newIds = currentIds.filter((id) => !seenRecipeIds.current.has(id));
+    seenRecipeIds.current = new Set(currentIds);
 
-  function addFiles(files: FileList | File[]) {
-    const imageFiles = Array.from(files).filter((file) =>
-      file.type.startsWith("image/")
-    );
-
-    setRecipes((prev) => [
-      ...prev,
-      ...imageFiles.map((file, i) => ({
-        id: `${Date.now()}-${i}-${file.name}`,
-        file,
-        previewUrl: URL.createObjectURL(file),
-        name: nameFromFile(file, prev.length + i),
-      })),
-    ]);
-  }
-
-  function removeRecipe(id: string) {
-    setRecipes((prev) => {
-      const target = prev.find((recipe) => recipe.id === id);
-      if (target) URL.revokeObjectURL(target.previewUrl);
-      return prev.filter((recipe) => recipe.id !== id);
-    });
-    setExtractions((prev) => {
-      const { [id]: _removed, ...rest } = prev;
-      return rest;
-    });
-  }
-
-  function renameRecipe(id: string, name: string) {
-    setRecipes((prev) =>
-      prev.map((recipe) => (recipe.id === id ? { ...recipe, name } : recipe))
-    );
-  }
-
-  async function runExtraction(recipe: RecipeDraft) {
-    setExtractions((prev) => ({ ...prev, [recipe.id]: { status: "loading" } }));
-    try {
-      const ingredients = await extractIngredients(recipe.file);
-      setExtractions((prev) => ({
-        ...prev,
-        [recipe.id]: { status: "done", ingredients },
-      }));
-    } catch (err) {
-      setExtractions((prev) => ({
-        ...prev,
-        [recipe.id]: {
-          status: "error",
-          message: err instanceof Error ? err.message : "Extraction failed",
-        },
-      }));
+    // Only auto-focus when a single recipe was just added — with a batch
+    // drop it's ambiguous which one to jump to, so leave it to the user.
+    if (newIds.length === 1) {
+      const input = nameInputRefs.current[newIds[0]];
+      input?.focus();
+      input?.select();
     }
-  }
-
-  function handleContinue() {
-    recipes.forEach((recipe) => runExtraction(recipe));
-  }
-
-  function updateIngredient(
-    recipeId: string,
-    ingredientId: string,
-    field: "name" | "quantity" | "unit",
-    value: string
-  ) {
-    setExtractions((prev) => {
-      const current = prev[recipeId];
-      if (current?.status !== "done") return prev;
-      return {
-        ...prev,
-        [recipeId]: {
-          status: "done",
-          ingredients: current.ingredients.map((ingredient) =>
-            ingredient.id === ingredientId
-              ? { ...ingredient, [field]: value || null }
-              : ingredient
-          ),
-        },
-      };
-    });
-  }
-
-  function removeIngredient(recipeId: string, ingredientId: string) {
-    setExtractions((prev) => {
-      const current = prev[recipeId];
-      if (current?.status !== "done") return prev;
-      return {
-        ...prev,
-        [recipeId]: {
-          status: "done",
-          ingredients: current.ingredients.filter(
-            (ingredient) => ingredient.id !== ingredientId
-          ),
-        },
-      };
-    });
-  }
+  }, [recipes]);
 
   const hasStartedReview = Object.keys(extractions).length > 0;
 
@@ -234,16 +109,21 @@ export default function UploadArea() {
                   </button>
                 </div>
                 <input
+                  ref={(el) => {
+                    nameInputRefs.current[recipe.id] = el;
+                  }}
                   value={recipe.name}
                   onChange={(e) => renameRecipe(recipe.id, e.target.value)}
-                  className="w-full rounded-md border border-transparent bg-transparent px-1.5 py-1 text-sm font-medium text-zinc-950 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none dark:text-zinc-50 dark:hover:border-zinc-800"
+                  onFocus={(e) => e.target.select()}
+                  placeholder="Name this recipe"
+                  className="w-full rounded-md border border-zinc-200 bg-transparent px-1.5 py-1 text-sm font-medium text-zinc-950 focus:border-zinc-400 focus:outline-none dark:border-zinc-800 dark:text-zinc-50"
                 />
               </div>
             ))}
           </div>
           <button
             type="button"
-            onClick={handleContinue}
+            onClick={runAllExtractions}
             disabled={recipes.length === 0}
             className="mt-2 flex h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-5 text-base font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200 sm:w-auto"
           >

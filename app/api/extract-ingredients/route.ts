@@ -2,6 +2,17 @@ import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { anthropic } from "@/lib/anthropic";
 
+const CATEGORIES = [
+  "Produce",
+  "Meat/Seafood",
+  "Dairy",
+  "Pantry",
+  "Frozen",
+  "Spices",
+  "Bakery",
+  "Other",
+] as const;
+
 const IngredientsSchema = z.object({
   ingredients: z.array(
     z.object({
@@ -9,6 +20,7 @@ const IngredientsSchema = z.object({
       name: z.string().describe("Normalized ingredient name, e.g. 'cucumber'"),
       quantity: z.string().nullable().describe("Amount, e.g. '2', '1/2' — null if not specified"),
       unit: z.string().nullable().describe("Unit, e.g. 'cups', 'tbsp' — null if not specified"),
+      category: z.enum(CATEGORIES).describe("Grocery category this ingredient belongs in"),
     })
   ),
 });
@@ -55,7 +67,7 @@ export async function POST(request: Request) {
           },
           {
             type: "text",
-            text: "Extract every ingredient listed in this recipe screenshot. Ignore instructions, captions, and hashtags — only the ingredients list.",
+            text: `Extract every ingredient listed in this recipe screenshot. Ignore instructions, captions, and hashtags — only the ingredients list. Assign each ingredient to the grocery category it would be found in: ${CATEGORIES.join(", ")}.`,
           },
         ],
       },
