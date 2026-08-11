@@ -22,6 +22,7 @@ model Recipe {
   sessionId   String
   session     Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   name        String
+  sourceUrl   String?
   createdAt   DateTime         @default(now())
   ingredients IngredientLine[]
 }

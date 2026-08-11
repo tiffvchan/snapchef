@@ -10,6 +10,7 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
     addFiles,
     removeRecipe,
     renameRecipe,
+    updateRecipeSourceUrl,
     runExtraction,
     runAllExtractions,
     updateIngredient,
@@ -93,12 +94,18 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                 className="flex flex-col gap-2 rounded-xl border border-zinc-200 p-2 dark:border-zinc-800"
               >
                 <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-900">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={recipe.previewUrl}
-                    alt={recipe.name}
-                    className="h-full w-full object-cover"
-                  />
+                  {recipe.previewUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={recipe.previewUrl}
+                      alt={recipe.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400 dark:text-zinc-600">
+                      added by partner
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => removeRecipe(recipe.id)}
@@ -117,6 +124,14 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                   onFocus={(e) => e.target.select()}
                   placeholder="Name this recipe"
                   className="w-full rounded-md border border-zinc-200 bg-transparent px-1.5 py-1 text-sm font-medium text-zinc-950 focus:border-zinc-400 focus:outline-none dark:border-zinc-800 dark:text-zinc-50"
+                />
+                <input
+                  value={recipe.sourceUrl ?? ""}
+                  onChange={(e) =>
+                    updateRecipeSourceUrl(recipe.id, e.target.value)
+                  }
+                  placeholder="Paste a link (optional)"
+                  className="w-full rounded-md border border-transparent bg-transparent px-1.5 py-1 text-xs text-zinc-500 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none dark:text-zinc-400 dark:hover:border-zinc-800"
                 />
               </div>
             ))}
@@ -143,9 +158,22 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
 
             return (
               <div key={recipe.id} className="flex flex-col gap-3">
-                <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50">
-                  {recipe.name}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50">
+                    {recipe.name}
+                  </p>
+                  {recipe.sourceUrl && (
+                    <a
+                      href={recipe.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Open source link for ${recipe.name}`}
+                      className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    >
+                      🔗
+                    </a>
+                  )}
+                </div>
 
                 {extraction.status === "loading" && (
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
