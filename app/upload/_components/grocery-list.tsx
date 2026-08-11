@@ -190,7 +190,7 @@ export default function GroceryList({ session }: { session: RecipeSession }) {
                   onChange={() => session.toggleHave(item.key)}
                   className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
                 />
-                <span className="flex-1 text-sm capitalize text-zinc-950 line-through dark:text-zinc-50">
+                <span className="flex-1 text-sm capitalize text-zinc-950 dark:text-zinc-50">
                   {item.displayName}
                 </span>
                 <span className="text-sm text-zinc-500 dark:text-zinc-400">
