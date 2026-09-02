@@ -5,14 +5,25 @@ export async function PATCH(
   { params }: { params: Promise<{ recipeId: string }> }
 ) {
   const { recipeId } = await params;
-  const { name, sourceUrl }: { name?: string; sourceUrl?: string | null } =
-    await request.json();
+  const {
+    name,
+    sourceUrl,
+    notes,
+    archived,
+  }: {
+    name?: string;
+    sourceUrl?: string | null;
+    notes?: string | null;
+    archived?: boolean;
+  } = await request.json();
 
   await prisma.recipe.update({
     where: { id: recipeId },
     data: {
       ...(name !== undefined && { name }),
       ...(sourceUrl !== undefined && { sourceUrl: sourceUrl || null }),
+      ...(notes !== undefined && { notes: notes || null }),
+      ...(archived !== undefined && { archived }),
     },
   });
   return Response.json({ ok: true });

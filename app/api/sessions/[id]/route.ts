@@ -14,6 +14,7 @@ export async function GET(
         include: { ingredients: true },
       },
       haveItems: true,
+      extraItems: { orderBy: { createdAt: "asc" } },
     },
   });
 
@@ -25,5 +26,6 @@ export async function GET(
     id: session.id,
     recipes: session.recipes,
     haveKeys: session.haveItems.map((item) => item.key),
+    extraItems: session.extraItems,
   });
 }

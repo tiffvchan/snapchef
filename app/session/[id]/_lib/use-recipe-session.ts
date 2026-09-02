@@ -17,6 +17,8 @@ export type RecipeDraft = {
   id: string;
   name: string;
   sourceUrl: string | null;
+  notes: string | null;
+  archived: boolean;
   file: File | null;
   previewUrl: string | null;
 };
@@ -36,8 +38,14 @@ export type ExtractionState =
   | { status: "error"; message: string }
   | { status: "done"; ingredients: IngredientLine[] };
 
+export type ExtraItem = {
+  id: string;
+  name: string;
+  category: Category;
+};
+
 const JUNK_FILENAME_PATTERN =
-  /^(screenshot|screen shot|img[_-]?\d|image[_-]?\d|photo[_-]?\d|snapchat[_-]|dsc[_-]?\d|\d{6,})/i;
+  /^(screenshot|screen shot|img[_-]?\d*|image[_-]?\d*|photo[_-]?\d*|snapchat[_-]|dsc[_-]?\d*|\d{6,}|untitled|paste)$/i;
 
 function nameFromFile(file: File, index: number) {
   const base = file.name.replace(/\.[^/.]+$/, "").trim();
@@ -98,9 +106,12 @@ type SessionData = {
     id: string;
     name: string;
     sourceUrl: string | null;
+    notes: string | null;
+    archived: boolean;
     ingredients: IngredientLine[];
   }[];
   haveKeys: string[];
+  extraItems: ExtraItem[];
 };
 
 export function useRecipeSession(sessionId: string) {
@@ -109,6 +120,7 @@ export function useRecipeSession(sessionId: string) {
     Record<string, ExtractionState>
   >({});
   const [haveKeys, setHaveKeys] = useState<Set<string>>(new Set());
+  const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
   const [loading, setLoading] = useState(true);
   const recipesRef = useRef(recipes);
   recipesRef.current = recipes;
@@ -131,6 +143,8 @@ export function useRecipeSession(sessionId: string) {
             id: r.id,
             name: r.name,
             sourceUrl: r.sourceUrl,
+            notes: r.notes,
+            archived: r.archived,
             file: null,
             previewUrl: null,
           }))
@@ -146,6 +160,7 @@ export function useRecipeSession(sessionId: string) {
           )
         );
         setHaveKeys(new Set(data.haveKeys));
+        setExtraItems(data.extraItems);
         data.recipes.forEach((r) => {
           recipeIdPromises.current[r.id] = Promise.resolve(r.id);
         });
@@ -181,6 +196,8 @@ export function useRecipeSession(sessionId: string) {
         id: localId,
         name,
         sourceUrl: null,
+        notes: null,
+        archived: false,
         file,
         previewUrl: URL.createObjectURL(file),
       };
@@ -231,6 +248,36 @@ export function useRecipeSession(sessionId: string) {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sourceUrl: sourceUrl || null }),
+      })
+    );
+  }
+
+  function updateRecipeNotes(id: string, notes: string) {
+    setRecipes((prev) =>
+      prev.map((recipe) =>
+        recipe.id === id ? { ...recipe, notes: notes || null } : recipe
+      )
+    );
+    getRecipeId(id)?.then((recipeId) =>
+      fetch(`/api/sessions/${sessionId}/recipes/${recipeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: notes || null }),
+      })
+    );
+  }
+
+  function setRecipeArchived(id: string, archived: boolean) {
+    setRecipes((prev) =>
+      prev.map((recipe) =>
+        recipe.id === id ? { ...recipe, archived } : recipe
+      )
+    );
+    getRecipeId(id)?.then((recipeId) =>
+      fetch(`/api/sessions/${sessionId}/recipes/${recipeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived }),
       })
     );
   }
@@ -330,20 +377,41 @@ export function useRecipeSession(sessionId: string) {
     });
   }
 
+  async function addExtraItem(name: string, category: Category) {
+    if (!name.trim()) return;
+    const res = await fetch(`/api/sessions/${sessionId}/items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, category }),
+    });
+    const item: ExtraItem = await res.json();
+    setExtraItems((prev) => [...prev, item]);
+  }
+
+  function removeExtraItem(id: string) {
+    setExtraItems((prev) => prev.filter((item) => item.id !== id));
+    fetch(`/api/sessions/${sessionId}/items/${id}`, { method: "DELETE" });
+  }
+
   return {
     recipes,
     extractions,
     haveKeys,
+    extraItems,
     loading,
     addFiles,
     removeRecipe,
     renameRecipe,
     updateRecipeSourceUrl,
+    updateRecipeNotes,
+    setRecipeArchived,
     runExtraction,
     runAllExtractions,
     updateIngredient,
     removeIngredient,
     toggleHave,
+    addExtraItem,
+    removeExtraItem,
   };
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, type SubmitEvent } from "react";
 import { CATEGORIES, type RecipeSession } from "../_lib/use-recipe-session";
 
 type UsedIn = {
@@ -16,12 +16,14 @@ type CompiledItem = {
   displayName: string;
   category: (typeof CATEGORIES)[number];
   usedIn: UsedIn[];
+  extraItemId: string | null;
 };
 
 function compileItems(session: RecipeSession): CompiledItem[] {
   const byKey = new Map<string, CompiledItem>();
 
   for (const recipe of session.recipes) {
+    if (recipe.archived) continue;
     const extraction = session.extractions[recipe.id];
     if (extraction?.status !== "done") continue;
 
@@ -46,9 +48,20 @@ function compileItems(session: RecipeSession): CompiledItem[] {
           displayName: ingredient.name,
           category: ingredient.category,
           usedIn: [usedIn],
+          extraItemId: null,
         });
       }
     }
+  }
+
+  for (const item of session.extraItems) {
+    byKey.set(`extra:${item.id}`, {
+      key: `extra:${item.id}`,
+      displayName: item.name,
+      category: item.category,
+      usedIn: [],
+      extraItemId: item.id,
+    });
   }
 
   return Array.from(byKey.values());
@@ -75,6 +88,7 @@ function entryLabel(entry: UsedIn): string {
 }
 
 function summarizeQuantity(usedIn: UsedIn[]): string {
+  if (usedIn.length === 0) return "";
   if (usedIn.length === 1) return entryLabel(usedIn[0]);
 
   const unit = usedIn[0].unit?.trim().toLowerCase() || null;
@@ -115,6 +129,104 @@ function UsedInBadge({ item }: { item: CompiledItem }) {
   );
 }
 
+function ItemRow({
+  item,
+  checked,
+  onToggle,
+  onRemoveExtra,
+}: {
+  item: CompiledItem;
+  checked: boolean;
+  onToggle: () => void;
+  onRemoveExtra: (id: string) => void;
+}) {
+  return (
+    <label
+      className={`flex items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800 ${
+        checked ? "opacity-60" : ""
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onToggle}
+        className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
+      />
+      <span className="flex-1 text-sm capitalize text-zinc-950 dark:text-zinc-50">
+        {item.displayName}
+      </span>
+      <span className="text-sm text-zinc-500 dark:text-zinc-400">
+        {summarizeQuantity(item.usedIn)}
+      </span>
+      {item.usedIn.length > 0 ? (
+        <UsedInBadge item={item} />
+      ) : (
+        item.extraItemId && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              onRemoveExtra(item.extraItemId!);
+            }}
+            aria-label={`Remove ${item.displayName}`}
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          >
+            ×
+          </button>
+        )
+      )}
+    </label>
+  );
+}
+
+function AddItemForm({ session }: { session: RecipeSession }) {
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>(
+    CATEGORIES[0]
+  );
+
+  function handleSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    session.addExtraItem(name.trim(), category);
+    setName("");
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="flex items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-3 py-2 dark:border-zinc-700"
+    >
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Add something else you need…"
+        className="flex-1 bg-transparent text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-50"
+      />
+      <select
+        value={category}
+        onChange={(e) =>
+          setCategory(e.target.value as (typeof CATEGORIES)[number])
+        }
+        className="rounded-md border border-zinc-200 bg-transparent px-1.5 py-1 text-xs text-zinc-700 focus:outline-none dark:border-zinc-800 dark:text-zinc-300"
+      >
+        {CATEGORIES.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
+      <button
+        type="submit"
+        disabled={!name.trim()}
+        className="rounded-full bg-zinc-950 px-3 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-950"
+      >
+        Add
+      </button>
+    </form>
+  );
+}
+
 export default function GroceryList({ session }: { session: RecipeSession }) {
   const items = useMemo(() => compileItems(session), [session]);
 
@@ -126,17 +238,15 @@ export default function GroceryList({ session }: { session: RecipeSession }) {
     items: needToBuy.filter((item) => item.category === category),
   })).filter((group) => group.items.length > 0);
 
-  if (items.length === 0) {
-    return (
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        Add recipes and extract ingredients first — your grocery list will
-        show up here.
-      </p>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-8">
+      {items.length === 0 && (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Add recipes and extract ingredients, or add an item below — your
+          grocery list will show up here.
+        </p>
+      )}
+
       {grouped.map((group) => (
         <div key={group.category} className="flex flex-col gap-2">
           <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
@@ -144,34 +254,25 @@ export default function GroceryList({ session }: { session: RecipeSession }) {
           </h3>
           <div className="flex flex-col gap-1">
             {group.items.map((item) => (
-              <label
+              <ItemRow
                 key={item.key}
-                className="flex items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800"
-              >
-                <input
-                  type="checkbox"
-                  checked={false}
-                  onChange={() => session.toggleHave(item.key)}
-                  className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
-                />
-                <span className="flex-1 text-sm capitalize text-zinc-950 dark:text-zinc-50">
-                  {item.displayName}
-                </span>
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {summarizeQuantity(item.usedIn)}
-                </span>
-                <UsedInBadge item={item} />
-              </label>
+                item={item}
+                checked={false}
+                onToggle={() => session.toggleHave(item.key)}
+                onRemoveExtra={session.removeExtraItem}
+              />
             ))}
           </div>
         </div>
       ))}
 
-      {needToBuy.length === 0 && (
+      {items.length > 0 && needToBuy.length === 0 && (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Nothing left to buy — everything is checked off below.
         </p>
       )}
+
+      <AddItemForm session={session} />
 
       {alreadyHave.length > 0 && (
         <div className="flex flex-col gap-2 border-t border-zinc-200 pt-6 dark:border-zinc-800">
@@ -180,24 +281,13 @@ export default function GroceryList({ session }: { session: RecipeSession }) {
           </h3>
           <div className="flex flex-col gap-1">
             {alreadyHave.map((item) => (
-              <label
+              <ItemRow
                 key={item.key}
-                className="flex items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2 opacity-60 dark:border-zinc-800"
-              >
-                <input
-                  type="checkbox"
-                  checked={true}
-                  onChange={() => session.toggleHave(item.key)}
-                  className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
-                />
-                <span className="flex-1 text-sm capitalize text-zinc-950 dark:text-zinc-50">
-                  {item.displayName}
-                </span>
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {summarizeQuantity(item.usedIn)}
-                </span>
-                <UsedInBadge item={item} />
-              </label>
+                item={item}
+                checked={true}
+                onToggle={() => session.toggleHave(item.key)}
+                onRemoveExtra={session.removeExtraItem}
+              />
             ))}
           </div>
         </div>

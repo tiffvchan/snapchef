@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useRecipeSession } from "../_lib/use-recipe-session";
 import UploadArea from "./upload-area";
 import GroceryList from "./grocery-list";
+import SavedRecipes from "./saved-recipes";
 
-const TABS = ["Add recipes", "Grocery list"] as const;
+const TABS = ["Add recipes", "Grocery list", "Saved recipes"] as const;
 
 export default function SessionView({ sessionId }: { sessionId: string }) {
   const session = useRecipeSession(sessionId);
@@ -54,11 +55,9 @@ export default function SessionView({ sessionId }: { sessionId: string }) {
         </button>
       </div>
 
-      {tab === "Add recipes" ? (
-        <UploadArea session={session} />
-      ) : (
-        <GroceryList session={session} />
-      )}
+      {tab === "Add recipes" && <UploadArea session={session} />}
+      {tab === "Grocery list" && <GroceryList session={session} />}
+      {tab === "Saved recipes" && <SavedRecipes session={session} />}
     </div>
   );
 }
