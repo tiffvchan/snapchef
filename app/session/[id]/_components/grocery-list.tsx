@@ -107,6 +107,44 @@ function summarizeQuantity(usedIn: UsedIn[]): string {
   return usedIn.map(entryLabel).join(" + ");
 }
 
+function formatGroceryListText(
+  grouped: { category: string; items: CompiledItem[] }[]
+): string {
+  return grouped
+    .map(({ category, items }) => {
+      const lines = items.map((item) => {
+        const qty = summarizeQuantity(item.usedIn);
+        return `- ${item.displayName}${qty ? ` (${qty})` : ""}`;
+      });
+      return `${category}\n${lines.join("\n")}`;
+    })
+    .join("\n\n");
+}
+
+function CopyListButton({
+  grouped,
+}: {
+  grouped: { category: string; items: CompiledItem[] }[];
+}) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(formatGroceryListText(grouped));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="self-start rounded-full border border-zinc-200 px-4 py-1.5 text-xs font-medium text-zinc-950 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-900"
+    >
+      {copied ? "Copied!" : "Copy list"}
+    </button>
+  );
+}
+
 function UsedInBadge({ item }: { item: CompiledItem }) {
   return (
     <div className="group relative">
@@ -246,6 +284,8 @@ export default function GroceryList({ session }: { session: RecipeSession }) {
           grocery list will show up here.
         </p>
       )}
+
+      {grouped.length > 0 && <CopyListButton grouped={grouped} />}
 
       {grouped.map((group) => (
         <div key={group.category} className="flex flex-col gap-2">
