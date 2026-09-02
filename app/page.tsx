@@ -15,8 +15,9 @@ export default function Home() {
           SnapChef
         </h1>
         <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-          Drop recipe screenshots in, get a categorized, deduped grocery list
-          out. Share the link with whoever you&apos;re cooking with.
+          Drop or paste recipe screenshots in, get a categorized, deduped
+          grocery list out. Share the link with whoever you&apos;re cooking
+          with.
         </p>
         <form action={createSession}>
           <button

@@ -11,10 +11,11 @@ datasource db {
 }
 
 model Session {
-  id        String     @id @default(cuid())
-  createdAt DateTime   @default(now())
-  recipes   Recipe[]
-  haveItems HaveItem[]
+  id         String      @id @default(cuid())
+  createdAt  DateTime    @default(now())
+  recipes    Recipe[]
+  haveItems  HaveItem[]
+  extraItems ExtraItem[]
 }
 
 model Recipe {
@@ -23,6 +24,8 @@ model Recipe {
   session     Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   name        String
   sourceUrl   String?
+  notes       String?
+  archived    Boolean          @default(false)
   createdAt   DateTime         @default(now())
   ingredients IngredientLine[]
 }
@@ -48,4 +51,14 @@ model HaveItem {
   createdAt DateTime @default(now())
 
   @@unique([sessionId, key])
+}
+
+// A grocery item added directly to the list, not extracted from any recipe.
+model ExtraItem {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name      String
+  category  String
+  createdAt DateTime @default(now())
 }

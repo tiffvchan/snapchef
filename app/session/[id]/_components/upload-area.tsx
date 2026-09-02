@@ -3,24 +3,57 @@
 import { useEffect, useRef, useState } from "react";
 import type { RecipeSession } from "../_lib/use-recipe-session";
 
+function imageFilesFromClipboard(data: DataTransfer | null): File[] {
+  if (!data) return [];
+
+  const fromFiles = Array.from(data.files).filter((file) =>
+    file.type.startsWith("image/")
+  );
+  if (fromFiles.length > 0) return fromFiles;
+
+  const fromItems: File[] = [];
+  for (const item of Array.from(data.items)) {
+    if (item.kind === "file" && item.type.startsWith("image/")) {
+      const file = item.getAsFile();
+      if (file) fromItems.push(file);
+    }
+  }
+  return fromItems;
+}
+
+function isTypingIntoField(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+}
+
 export default function UploadArea({ session }: { session: RecipeSession }) {
   const {
-    recipes,
+    recipes: allRecipes,
     extractions,
     addFiles,
     removeRecipe,
     renameRecipe,
     updateRecipeSourceUrl,
+    updateRecipeNotes,
+    setRecipeArchived,
     runExtraction,
     runAllExtractions,
     updateIngredient,
     removeIngredient,
   } = session;
 
+  const recipes = allRecipes.filter((r) => !r.archived);
+
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const nameInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const seenRecipeIds = useRef<Set<string>>(new Set());
+  const addFilesRef = useRef(addFiles);
+  useEffect(() => {
+    addFilesRef.current = addFiles;
+  });
 
   useEffect(() => {
     const currentIds = recipes.map((r) => r.id);
@@ -35,6 +68,24 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
       input?.select();
     }
   }, [recipes]);
+
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      const images = imageFilesFromClipboard(e.clipboardData);
+      if (images.length === 0) return;
+      if (
+        isTypingIntoField(e.target) &&
+        e.clipboardData?.getData("text/plain")
+      ) {
+        return;
+      }
+      e.preventDefault();
+      addFilesRef.current(images);
+    }
+
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, []);
 
   const hasStartedReview = Object.keys(extractions).length > 0;
 
@@ -64,7 +115,7 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
         }`}
       >
         <p className="text-lg font-medium text-zinc-950 dark:text-zinc-50">
-          Drop recipe screenshots here
+          Drop or paste recipe screenshots here
         </p>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           or click to browse — you can add more than one
@@ -173,6 +224,13 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                       🔗
                     </a>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => setRecipeArchived(recipe.id, true)}
+                    className="ml-auto text-xs font-medium text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50"
+                  >
+                    Save for later
+                  </button>
                 </div>
 
                 {extraction.status === "loading" && (
@@ -258,6 +316,14 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                     ))}
                   </div>
                 )}
+
+                <textarea
+                  value={recipe.notes ?? ""}
+                  onChange={(e) => updateRecipeNotes(recipe.id, e.target.value)}
+                  placeholder="Notes — adjustments, commentary…"
+                  rows={2}
+                  className="w-full resize-none rounded-md border border-transparent bg-transparent px-1.5 py-1 text-sm text-zinc-700 placeholder:text-zinc-400 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none dark:text-zinc-300 dark:hover:border-zinc-800"
+                />
               </div>
             );
           })}

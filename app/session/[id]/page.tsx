@@ -19,8 +19,8 @@ export default async function SessionPage({
           SnapChef
         </h1>
         <p className="text-zinc-500 dark:text-zinc-400">
-          Drop in screenshots of the recipes you want to cook. Share the link
-          below so anyone else on this list can drop in theirs too.
+          Drop or paste screenshots of the recipes you want to cook. Share the
+          link below so anyone else on this list can add theirs too.
         </p>
       </div>
       <SessionView sessionId={id} />
