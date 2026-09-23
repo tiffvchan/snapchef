@@ -138,7 +138,7 @@ function CopyListButton({
     <button
       type="button"
       onClick={handleCopy}
-      className="self-start rounded-full border border-zinc-200 px-4 py-1.5 text-xs font-medium text-zinc-950 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-900"
+      className="self-start rounded-full border border-zinc-200 px-4 py-1.5 text-xs font-medium text-zinc-950 hover:bg-zinc-100"
     >
       {copied ? "Copied!" : "Copy list"}
     </button>
@@ -148,16 +148,14 @@ function CopyListButton({
 function UsedInBadge({ item }: { item: CompiledItem }) {
   return (
     <div className="group relative">
-      <span className="cursor-default rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+      <span className="cursor-default rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
         used in {item.usedIn.length} recipe{item.usedIn.length === 1 ? "" : "s"}
       </span>
-      <div className="pointer-events-none absolute right-0 top-full z-10 mt-1 hidden w-56 rounded-lg border border-zinc-200 bg-white p-2 text-xs shadow-lg group-hover:block dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="pointer-events-none absolute right-0 top-full z-10 mt-1 hidden w-56 rounded-lg border border-zinc-200 bg-white p-2 text-xs shadow-lg group-hover:block">
         {item.usedIn.map((entry, i) => (
           <div key={i} className="flex justify-between gap-2 py-0.5">
-            <span className="text-zinc-500 dark:text-zinc-400">
-              {entry.recipeName}
-            </span>
-            <span className="text-right font-medium text-zinc-950 dark:text-zinc-50">
+            <span className="text-zinc-500">{entry.recipeName}</span>
+            <span className="text-right font-medium text-zinc-950">
               {entryLabel(entry)}
             </span>
           </div>
@@ -180,7 +178,7 @@ function ItemRow({
 }) {
   return (
     <label
-      className={`flex items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800 ${
+      className={`flex items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2 ${
         checked ? "opacity-60" : ""
       }`}
     >
@@ -188,14 +186,12 @@ function ItemRow({
         type="checkbox"
         checked={checked}
         onChange={onToggle}
-        className="h-4 w-4 accent-zinc-950 dark:accent-zinc-50"
+        className="h-4 w-4 accent-olive-600"
       />
-      <span className="flex-1 text-sm capitalize text-zinc-950 dark:text-zinc-50">
+      <span className="flex-1 text-sm capitalize text-zinc-950">
         {item.displayName}
       </span>
-      <span className="text-sm text-zinc-500 dark:text-zinc-400">
-        {summarizeQuantity(item.usedIn)}
-      </span>
+      <span className="text-sm text-zinc-500">{summarizeQuantity(item.usedIn)}</span>
       {item.usedIn.length > 0 ? (
         <UsedInBadge item={item} />
       ) : (
@@ -207,7 +203,7 @@ function ItemRow({
               onRemoveExtra(item.extraItemId!);
             }}
             aria-label={`Remove ${item.displayName}`}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
           >
             ×
           </button>
@@ -233,20 +229,20 @@ function AddItemForm({ session }: { session: RecipeSession }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-3 py-2 dark:border-zinc-700"
+      className="flex items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-3 py-2"
     >
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Add something else you need…"
-        className="flex-1 bg-transparent text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-50"
+        className="flex-1 bg-transparent text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none"
       />
       <select
         value={category}
         onChange={(e) =>
           setCategory(e.target.value as (typeof CATEGORIES)[number])
         }
-        className="rounded-md border border-zinc-200 bg-transparent px-1.5 py-1 text-xs text-zinc-700 focus:outline-none dark:border-zinc-800 dark:text-zinc-300"
+        className="rounded-md border border-zinc-200 bg-transparent px-1.5 py-1 text-xs text-zinc-700 focus:outline-none"
       >
         {CATEGORIES.map((c) => (
           <option key={c} value={c}>
@@ -257,7 +253,7 @@ function AddItemForm({ session }: { session: RecipeSession }) {
       <button
         type="submit"
         disabled={!name.trim()}
-        className="rounded-full bg-zinc-950 px-3 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-950"
+        className="rounded-full bg-olive-600 px-3 py-1 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         Add
       </button>
@@ -279,7 +275,7 @@ export default function GroceryList({ session }: { session: RecipeSession }) {
   return (
     <div className="flex flex-col gap-8">
       {items.length === 0 && (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-zinc-500">
           Add recipes and extract ingredients, or add an item below — your
           grocery list will show up here.
         </p>
@@ -289,7 +285,7 @@ export default function GroceryList({ session }: { session: RecipeSession }) {
 
       {grouped.map((group) => (
         <div key={group.category} className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+          <h3 className="text-sm font-semibold text-zinc-950">
             {group.category}
           </h3>
           <div className="flex flex-col gap-1">
@@ -307,7 +303,7 @@ export default function GroceryList({ session }: { session: RecipeSession }) {
       ))}
 
       {items.length > 0 && needToBuy.length === 0 && (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-zinc-500">
           Nothing left to buy — everything is checked off below.
         </p>
       )}
@@ -315,10 +311,8 @@ export default function GroceryList({ session }: { session: RecipeSession }) {
       <AddItemForm session={session} />
 
       {alreadyHave.length > 0 && (
-        <div className="flex flex-col gap-2 border-t border-zinc-200 pt-6 dark:border-zinc-800">
-          <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
-            Already have
-          </h3>
+        <div className="flex flex-col gap-2 border-t border-zinc-200 pt-6">
+          <h3 className="text-sm font-semibold text-zinc-500">Already have</h3>
           <div className="flex flex-col gap-1">
             {alreadyHave.map((item) => (
               <ItemRow
