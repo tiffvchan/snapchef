@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Cedarville_Cursive } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,8 +12,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const cedarvilleCursive = Cedarville_Cursive({
+  weight: "400",
+  variable: "--font-cedarville",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "SnapChef",
+  title: "snapchef",
   description: "Turn recipe screenshots into a categorized grocery list.",
 };
 
@@ -21,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${cedarvilleCursive.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
