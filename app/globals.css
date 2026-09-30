@@ -16,12 +16,19 @@
   --font-logo: var(--font-cedarville);
   --color-olive-50: #f5f6ee;
   --color-olive-100: #e7eadb;
+  --color-olive-200: #d4dabd;
+  --color-olive-300: #c0c99f;
   --color-olive-400: #9aab78;
   --color-olive-500: #8a9a68;
   --color-olive-600: #6b7a4f;
   --color-olive-700: #5c6a44;
   --color-olive-900: #333c22;
   --color-paper: #f7f0e0;
+  --color-fridge-50: #ffffff;
+  --color-fridge-200: #f2f1ea;
+  --color-terracotta-300: #e3906f;
+  --color-terracotta-500: #c9714f;
+  --color-terracotta-700: #8a4630;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -47,4 +54,48 @@ body {
     calc(var(--tile-size) / -2) 0;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+.bg-fridge {
+  background-color: var(--color-fridge-200);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch' result='t'/%3E%3CfeColorMatrix in='t' type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, var(--color-fridge-50), var(--color-fridge-200));
+  background-blend-mode: soft-light, normal;
+  background-size: 160px 160px, cover;
+}
+
+.magnet-olive {
+  background: radial-gradient(
+    circle at 35% 35%,
+    var(--color-olive-400),
+    var(--color-olive-600) 60%,
+    var(--color-olive-900) 100%
+  );
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+.fridge-handle {
+  background: linear-gradient(
+    90deg,
+    #fbfaf6 0%,
+    #d8d5c9 32%,
+    #b3b0a1 60%,
+    #8f8c7d 100%
+  );
+  box-shadow: inset 1.5px 0 2px rgba(255, 255, 255, 0.6),
+    inset -1.5px 0 2px rgba(0, 0, 0, 0.25), 2px 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+.magnet-terracotta {
+  background: radial-gradient(
+    circle at 35% 35%,
+    var(--color-terracotta-300),
+    var(--color-terracotta-500) 60%,
+    var(--color-terracotta-700) 100%
+  );
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
 }

@@ -91,60 +91,72 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-8">
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setIsDragging(false);
-          if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
-        }}
-        onClick={() => inputRef.current?.click()}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
-        }}
-        className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-6 py-16 text-center transition-colors cursor-pointer ${
-          isDragging
-            ? "border-zinc-950 bg-zinc-50"
-            : "border-zinc-300 hover:border-zinc-400"
-        }`}
-      >
-        <p className="text-lg font-medium text-zinc-950">
-          Drop or paste recipe screenshots here
-        </p>
-        <p className="text-sm text-zinc-500">
-          or click to browse — you can add more than one
-        </p>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={(e) => {
-            if (e.target.files?.length) addFiles(e.target.files);
-            e.target.value = "";
-          }}
-        />
-      </div>
-
-      {recipes.length > 0 && (
-        <div className="flex flex-col gap-4">
-          <p className="text-sm font-medium text-zinc-500">
+      <div className="flex flex-col gap-4">
+        {recipes.length > 0 && (
+          <p className="text-sm font-medium text-olive-700">
             {recipes.length} recipe{recipes.length === 1 ? "" : "s"} added
           </p>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {recipes.map((recipe) => (
+        )}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+            }}
+            onClick={() => inputRef.current?.click()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ")
+                inputRef.current?.click();
+            }}
+            className={`relative flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed bg-paper/40 p-2 text-center transition-colors cursor-pointer ${
+              isDragging
+                ? "border-olive-600 bg-paper/70"
+                : "border-olive-300 hover:border-olive-400"
+            }`}
+          >
+            <span
+              aria-hidden="true"
+              className="magnet-olive absolute -top-2 -left-2 h-3.5 w-3.5 rotate-12 rounded-full"
+            />
+            <span aria-hidden="true" className="text-2xl leading-none text-olive-400">
+              +
+            </span>
+            <p className="text-xs font-medium text-olive-600">Upload</p>
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.length) addFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </div>
+
+          {recipes.map((recipe, i) => (
               <div
                 key={recipe.id}
-                className="flex flex-col gap-2 rounded-xl border border-zinc-200 p-2"
+                className={`relative flex flex-col gap-2 rounded-lg bg-paper p-2 shadow-md ${
+                  i % 2 === 0 ? "-rotate-2" : "rotate-2"
+                }`}
               >
-                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-zinc-100">
+                <span
+                  aria-hidden="true"
+                  className={`${
+                    i % 2 === 0 ? "magnet-olive" : "magnet-terracotta"
+                  } absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full`}
+                />
+                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-olive-50">
                   {recipe.previewUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -153,7 +165,7 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400">
+                    <div className="flex h-full w-full items-center justify-center text-xs text-olive-400">
                       added by partner
                     </div>
                   )}
@@ -174,7 +186,7 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                   onChange={(e) => renameRecipe(recipe.id, e.target.value)}
                   onFocus={(e) => e.target.select()}
                   placeholder="Name this recipe"
-                  className="w-full rounded-md border border-zinc-200 bg-transparent px-1.5 py-1 text-sm font-medium text-zinc-950 focus:border-zinc-400 focus:outline-none"
+                  className="w-full rounded-md border border-olive-100 bg-transparent px-1.5 py-1 text-sm font-medium text-olive-900 focus:border-olive-400 focus:outline-none"
                 />
                 <input
                   value={recipe.sourceUrl ?? ""}
@@ -182,25 +194,25 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                     updateRecipeSourceUrl(recipe.id, e.target.value)
                   }
                   placeholder="Paste a link (optional)"
-                  className="w-full rounded-md border border-transparent bg-transparent px-1.5 py-1 text-xs text-zinc-500 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none"
+                  className="w-full rounded-md border border-transparent bg-transparent px-1.5 py-1 text-xs text-olive-700 hover:border-olive-100 focus:border-olive-400 focus:outline-none"
                 />
               </div>
             ))}
-          </div>
+        </div>
+        {recipes.length > 0 && (
           <button
             type="button"
             onClick={runAllExtractions}
-            disabled={recipes.length === 0}
             className="mt-2 flex h-12 w-full items-center justify-center rounded-full bg-olive-600 px-5 text-base font-medium text-white transition-colors hover:bg-olive-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             Continue to review ingredients
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {hasStartedReview && (
-        <div className="flex flex-col gap-6 border-t border-zinc-200 pt-8">
-          <h2 className="text-lg font-semibold text-zinc-950">
+        <div className="flex flex-col gap-6 border-t border-olive-100 pt-8">
+          <h2 className="text-lg font-semibold text-olive-900">
             Review ingredients
           </h2>
           {recipes.map((recipe) => {
@@ -210,7 +222,7 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
             return (
               <div key={recipe.id} className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-zinc-950">
+                  <p className="text-sm font-medium text-olive-900">
                     {recipe.name}
                   </p>
                   {recipe.sourceUrl && (
@@ -219,7 +231,7 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`Open source link for ${recipe.name}`}
-                      className="text-zinc-400 hover:text-zinc-700"
+                      className="text-olive-400 hover:text-olive-700"
                     >
                       🔗
                     </a>
@@ -227,14 +239,14 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                   <button
                     type="button"
                     onClick={() => setRecipeArchived(recipe.id, true)}
-                    className="ml-auto text-xs font-medium text-zinc-500 hover:text-zinc-950"
+                    className="ml-auto text-xs font-medium text-olive-700 hover:text-olive-900"
                   >
                     Save for later
                   </button>
                 </div>
 
                 {extraction.status === "loading" && (
-                  <p className="text-sm text-zinc-500">Reading ingredients…</p>
+                  <p className="text-sm text-olive-700">Reading ingredients…</p>
                 )}
 
                 {extraction.status === "error" && (
@@ -243,7 +255,7 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                     <button
                       type="button"
                       onClick={() => runExtraction(recipe)}
-                      className="font-medium text-zinc-950 underline"
+                      className="font-medium text-olive-900 underline"
                     >
                       Retry
                     </button>
@@ -253,14 +265,14 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                 {extraction.status === "done" && (
                   <div className="flex flex-col gap-1">
                     {extraction.ingredients.length === 0 && (
-                      <p className="text-sm text-zinc-500">
+                      <p className="text-sm text-olive-700">
                         No ingredients found — add them manually below.
                       </p>
                     )}
                     {extraction.ingredients.map((ingredient) => (
                       <div
                         key={ingredient.id}
-                        className="flex items-center gap-2 rounded-lg border border-zinc-200 px-2 py-1.5"
+                        className="flex items-center gap-2 rounded-lg border border-olive-100 px-2 py-1.5"
                       >
                         <input
                           value={ingredient.quantity ?? ""}
@@ -273,7 +285,7 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                             )
                           }
                           placeholder="qty"
-                          className="w-14 rounded-md border border-transparent bg-transparent px-1 py-1 text-sm text-zinc-700 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none"
+                          className="w-14 rounded-md border border-transparent bg-transparent px-1 py-1 text-sm text-olive-700 hover:border-olive-100 focus:border-olive-400 focus:outline-none"
                         />
                         <input
                           value={ingredient.unit ?? ""}
@@ -286,7 +298,7 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                             )
                           }
                           placeholder="unit"
-                          className="w-16 rounded-md border border-transparent bg-transparent px-1 py-1 text-sm text-zinc-700 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none"
+                          className="w-16 rounded-md border border-transparent bg-transparent px-1 py-1 text-sm text-olive-700 hover:border-olive-100 focus:border-olive-400 focus:outline-none"
                         />
                         <input
                           value={ingredient.name}
@@ -298,13 +310,13 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                               e.target.value
                             )
                           }
-                          className="flex-1 rounded-md border border-transparent bg-transparent px-1 py-1 text-sm font-medium text-zinc-950 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none"
+                          className="flex-1 rounded-md border border-transparent bg-transparent px-1 py-1 text-sm font-medium text-olive-900 hover:border-olive-100 focus:border-olive-400 focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => removeIngredient(recipe.id, ingredient.id)}
                           aria-label={`Remove ${ingredient.name}`}
-                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-olive-400 hover:bg-olive-50 hover:text-olive-700"
                         >
                           ×
                         </button>
@@ -318,7 +330,7 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                   onChange={(e) => updateRecipeNotes(recipe.id, e.target.value)}
                   placeholder="Notes — adjustments, commentary…"
                   rows={2}
-                  className="w-full resize-none rounded-md border border-transparent bg-transparent px-1.5 py-1 text-sm text-zinc-700 placeholder:text-zinc-400 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none"
+                  className="w-full resize-none rounded-md border border-transparent bg-transparent px-1.5 py-1 text-sm text-olive-700 placeholder:text-olive-400 hover:border-olive-100 focus:border-olive-400 focus:outline-none"
                 />
               </div>
             );
