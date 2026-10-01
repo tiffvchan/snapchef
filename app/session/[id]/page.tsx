@@ -14,7 +14,7 @@ export default async function SessionPage({
 
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-16">
-      <h1 className="font-logo pb-8 text-8xl text-olive-900">snapchef*</h1>
+      <h1 className="font-logo pb-8 text-6xl text-olive-900">snapchef*</h1>
       <SessionView sessionId={id} />
     </div>
   );
