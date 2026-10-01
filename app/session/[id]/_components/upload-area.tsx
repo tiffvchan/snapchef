@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Clock, Link as LinkIcon, Pin, PinOff, Plus, X } from "lucide-react";
 import type { RecipeSession } from "../_lib/use-recipe-session";
+
 
 function imageFilesFromClipboard(data: DataTransfer | null): File[] {
   if (!data) return [];
@@ -36,19 +38,17 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
     removeRecipe,
     renameRecipe,
     updateRecipeSourceUrl,
-    updateRecipeNotes,
     setRecipeArchived,
     runExtraction,
     runAllExtractions,
-    updateIngredient,
-    removeIngredient,
   } = session;
 
   const recipes = allRecipes.filter((r) => !r.archived);
+  const archivedRecipes = allRecipes.filter((r) => r.archived);
 
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const nameInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const nameInputRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const seenRecipeIds = useRef<Set<string>>(new Set());
   const addFilesRef = useRef(addFiles);
   useEffect(() => {
@@ -91,82 +91,34 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-8">
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setIsDragging(false);
-          if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
-        }}
-        onClick={() => inputRef.current?.click()}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
-        }}
-        className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-6 py-16 text-center transition-colors cursor-pointer ${
-          isDragging
-            ? "border-zinc-950 bg-zinc-50"
-            : "border-zinc-300 hover:border-zinc-400"
-        }`}
-      >
-        <p className="text-lg font-medium text-zinc-950">
-          Drop or paste recipe screenshots here
-        </p>
-        <p className="text-sm text-zinc-500">
-          or click to browse — you can add more than one
-        </p>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={(e) => {
-            if (e.target.files?.length) addFiles(e.target.files);
-            e.target.value = "";
-          }}
-        />
-      </div>
-
-      {recipes.length > 0 && (
-        <div className="flex flex-col gap-4">
-          <p className="text-sm font-medium text-zinc-500">
-            {recipes.length} recipe{recipes.length === 1 ? "" : "s"} added
-          </p>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {recipes.map((recipe) => (
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-3">
+          {recipes.map((recipe, i) => (
               <div
                 key={recipe.id}
-                className="flex flex-col gap-2 rounded-xl border border-zinc-200 p-2"
+                className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-none border-2 border-[#171717] bg-white p-1 text-center ${
+                  i % 2 === 0 ? "-rotate-2" : "rotate-2"
+                }`}
               >
-                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-zinc-100">
-                  {recipe.previewUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={recipe.previewUrl}
-                      alt={recipe.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400">
-                      added by partner
-                    </div>
-                  )}
+                <div className="absolute right-0.5 top-0.5 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setRecipeArchived(recipe.id, true)}
+                    aria-label={`Save ${recipe.name} for later`}
+                    className="flex h-4 w-4 items-center justify-center rounded-full text-olive-400 hover:bg-olive-50 hover:text-olive-700"
+                  >
+                    <Clock className="h-2.5 w-2.5" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => removeRecipe(recipe.id)}
                     aria-label={`Remove ${recipe.name}`}
-                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                    className="flex h-4 w-4 items-center justify-center rounded-full text-olive-400 hover:bg-olive-50 hover:text-olive-700"
                   >
-                    ×
+                    <X className="h-2.5 w-2.5" />
                   </button>
                 </div>
-                <input
+                <textarea
                   ref={(el) => {
                     nameInputRefs.current[recipe.id] = el;
                   }}
@@ -174,152 +126,133 @@ export default function UploadArea({ session }: { session: RecipeSession }) {
                   onChange={(e) => renameRecipe(recipe.id, e.target.value)}
                   onFocus={(e) => e.target.select()}
                   placeholder="Name this recipe"
-                  className="w-full rounded-md border border-zinc-200 bg-transparent px-1.5 py-1 text-sm font-medium text-zinc-950 focus:border-zinc-400 focus:outline-none"
+                  rows={2}
+                  className="w-full shrink-0 resize-none rounded-md border border-transparent bg-transparent px-0.5 py-0.5 text-center text-[11px] font-bold leading-tight text-[#171717] hover:border-olive-100 focus:border-olive-400 focus:outline-none"
                 />
-                <input
-                  value={recipe.sourceUrl ?? ""}
-                  onChange={(e) =>
-                    updateRecipeSourceUrl(recipe.id, e.target.value)
-                  }
-                  placeholder="Paste a link (optional)"
-                  className="w-full rounded-md border border-transparent bg-transparent px-1.5 py-1 text-xs text-zinc-500 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none"
-                />
+                <div className="flex w-full items-center gap-0.5 px-0.5">
+                  <LinkIcon className="h-2.5 w-2.5 shrink-0 text-olive-400" />
+                  <input
+                    value={recipe.sourceUrl ?? ""}
+                    onChange={(e) =>
+                      updateRecipeSourceUrl(recipe.id, e.target.value)
+                    }
+                    placeholder="link"
+                    className="w-full min-w-0 pl-1 rounded border border-transparent bg-transparent py-0.5 text-[9px] text-olive-700 hover:border-olive-100 focus:border-olive-400 focus:outline-none"
+                  />
+                </div>
               </div>
             ))}
-          </div>
-          <button
-            type="button"
-            onClick={runAllExtractions}
-            disabled={recipes.length === 0}
-            className="mt-2 flex h-12 w-full items-center justify-center rounded-full bg-olive-600 px-5 text-base font-medium text-white transition-colors hover:bg-olive-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+
+          {archivedRecipes.map((recipe, i) => (
+            <div
+              key={recipe.id}
+              className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-none border-2 border-[#171717] bg-white p-1 text-center opacity-60 ${
+                i % 2 === 0 ? "-rotate-2" : "rotate-2"
+              }`}
+            >
+              <Pin
+                aria-hidden="true"
+                className="absolute -top-2 -left-2 h-4 w-4 rotate-[-30deg] text-[#171717]"
+                fill="#f0b429"
+              />
+              <div className="absolute right-0.5 top-0.5 flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setRecipeArchived(recipe.id, false)}
+                  aria-label={`Add ${recipe.name} back to list`}
+                  className="flex h-4 w-4 items-center justify-center rounded-full text-olive-400 hover:bg-olive-50 hover:text-olive-700"
+                >
+                  <PinOff className="h-2.5 w-2.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeRecipe(recipe.id)}
+                  aria-label={`Delete ${recipe.name}`}
+                  className="flex h-4 w-4 items-center justify-center rounded-full text-olive-400 hover:bg-olive-50 hover:text-olive-700"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </div>
+              <p className="w-full px-0.5 text-center text-[11px] font-bold leading-tight text-[#171717]">
+                {recipe.name}
+              </p>
+            </div>
+          ))}
+
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+            }}
+            onClick={() => inputRef.current?.click()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ")
+                inputRef.current?.click();
+            }}
+            className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 border-2 border-dashed bg-paper/40 p-1 text-center transition-colors cursor-pointer ${
+              isDragging
+                ? "border-[#171717] bg-paper/70"
+                : "border-olive-400 hover:border-[#171717]"
+            }`}
           >
-            Continue to review ingredients
-          </button>
+            <Plus aria-hidden="true" className="h-4 w-4 text-olive-400" />
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.length) addFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </div>
         </div>
-      )}
+        {recipes.length > 0 && (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={runAllExtractions}
+              className="mt-2 flex h-12 items-center justify-center rounded-full bg-olive-600 px-5 text-base font-medium text-white transition-colors hover:bg-olive-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Generate grocery list
+            </button>
+          </div>
+        )}
+      </div>
 
       {hasStartedReview && (
-        <div className="flex flex-col gap-6 border-t border-zinc-200 pt-8">
-          <h2 className="text-lg font-semibold text-zinc-950">
-            Review ingredients
-          </h2>
+        <div className="flex flex-col gap-2">
           {recipes.map((recipe) => {
             const extraction = extractions[recipe.id];
-            if (!extraction) return null;
+            if (!extraction || extraction.status === "done") return null;
 
             return (
-              <div key={recipe.id} className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-zinc-950">
-                    {recipe.name}
-                  </p>
-                  {recipe.sourceUrl && (
-                    <a
-                      href={recipe.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Open source link for ${recipe.name}`}
-                      className="text-zinc-400 hover:text-zinc-700"
-                    >
-                      🔗
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setRecipeArchived(recipe.id, true)}
-                    className="ml-auto text-xs font-medium text-zinc-500 hover:text-zinc-950"
-                  >
-                    Save for later
-                  </button>
-                </div>
-
+              <div key={recipe.id} className="flex items-center gap-3 text-sm">
                 {extraction.status === "loading" && (
-                  <p className="text-sm text-zinc-500">Reading ingredients…</p>
+                  <p className="text-olive-700">Reading ingredients…</p>
                 )}
-
                 {extraction.status === "error" && (
-                  <div className="flex items-center gap-3 text-sm">
+                  <>
                     <p className="text-red-600">{extraction.message}</p>
                     <button
                       type="button"
                       onClick={() => runExtraction(recipe)}
-                      className="font-medium text-zinc-950 underline"
+                      className="font-medium text-olive-900 underline"
                     >
                       Retry
                     </button>
-                  </div>
+                  </>
                 )}
-
-                {extraction.status === "done" && (
-                  <div className="flex flex-col gap-1">
-                    {extraction.ingredients.length === 0 && (
-                      <p className="text-sm text-zinc-500">
-                        No ingredients found — add them manually below.
-                      </p>
-                    )}
-                    {extraction.ingredients.map((ingredient) => (
-                      <div
-                        key={ingredient.id}
-                        className="flex items-center gap-2 rounded-lg border border-zinc-200 px-2 py-1.5"
-                      >
-                        <input
-                          value={ingredient.quantity ?? ""}
-                          onChange={(e) =>
-                            updateIngredient(
-                              recipe.id,
-                              ingredient.id,
-                              "quantity",
-                              e.target.value
-                            )
-                          }
-                          placeholder="qty"
-                          className="w-14 rounded-md border border-transparent bg-transparent px-1 py-1 text-sm text-zinc-700 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none"
-                        />
-                        <input
-                          value={ingredient.unit ?? ""}
-                          onChange={(e) =>
-                            updateIngredient(
-                              recipe.id,
-                              ingredient.id,
-                              "unit",
-                              e.target.value
-                            )
-                          }
-                          placeholder="unit"
-                          className="w-16 rounded-md border border-transparent bg-transparent px-1 py-1 text-sm text-zinc-700 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none"
-                        />
-                        <input
-                          value={ingredient.name}
-                          onChange={(e) =>
-                            updateIngredient(
-                              recipe.id,
-                              ingredient.id,
-                              "name",
-                              e.target.value
-                            )
-                          }
-                          className="flex-1 rounded-md border border-transparent bg-transparent px-1 py-1 text-sm font-medium text-zinc-950 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeIngredient(recipe.id, ingredient.id)}
-                          aria-label={`Remove ${ingredient.name}`}
-                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <textarea
-                  value={recipe.notes ?? ""}
-                  onChange={(e) => updateRecipeNotes(recipe.id, e.target.value)}
-                  placeholder="Notes — adjustments, commentary…"
-                  rows={2}
-                  className="w-full resize-none rounded-md border border-transparent bg-transparent px-1.5 py-1 text-sm text-zinc-700 placeholder:text-zinc-400 hover:border-zinc-200 focus:border-zinc-400 focus:outline-none"
-                />
               </div>
             );
           })}

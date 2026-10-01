@@ -16,12 +16,18 @@
   --font-logo: var(--font-cedarville);
   --color-olive-50: #f5f6ee;
   --color-olive-100: #e7eadb;
+  --color-olive-200: #d4dabd;
+  --color-olive-300: #c0c99f;
   --color-olive-400: #9aab78;
   --color-olive-500: #8a9a68;
   --color-olive-600: #6b7a4f;
   --color-olive-700: #5c6a44;
   --color-olive-900: #333c22;
   --color-paper: #f7f0e0;
+  --color-fridge: #f3e4b8;
+  --color-terracotta-300: #e3906f;
+  --color-terracotta-500: #c9714f;
+  --color-terracotta-700: #8a4630;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -48,3 +54,17 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+.bg-fridge {
+  background-color: var(--color-fridge);
+}
+
+.fridge-handle {
+  background-color: #d4cfc0;
+  border: 3px solid #171717;
+}
+
