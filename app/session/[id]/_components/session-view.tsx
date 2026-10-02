@@ -26,7 +26,7 @@ export default function SessionView({ sessionId }: { sessionId: string }) {
         <div className="relative p-4 pb-8 pl-10 sm:p-6 sm:pb-10 sm:pl-12">
           <div
             aria-hidden="true"
-            className="fridge-handle pointer-events-none absolute left-3 bottom-4 h-16 w-3.5 rounded-full"
+            className="fridge-handle pointer-events-none absolute left-5 bottom-4 h-16 w-3.5 rounded-full"
           />
           <div className="relative">
             <UploadArea session={session} />
@@ -37,10 +37,10 @@ export default function SessionView({ sessionId }: { sessionId: string }) {
         <div className="relative h-[3px] shrink-0 bg-[#171717]" />
 
         {/* fridge */}
-        <div className="relative min-h-[320px] p-4 pt-8 pl-10 sm:p-6 sm:pt-10 sm:pl-12">
+        <div className="relative min-h-[320px] p-4 pt-6 pl-12 sm:p-6 sm:pt-10 sm:pl-12">
           <div
             aria-hidden="true"
-            className="fridge-handle pointer-events-none absolute left-3 top-8 h-20 w-3.5 rounded-full sm:h-24"
+            className="fridge-handle pointer-events-none absolute left-5 top-8 h-20 w-3.5 rounded-full sm:h-24"
           />
           <div className="relative">
             <GroceryList session={session} />
